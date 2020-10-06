@@ -1,0 +1,79 @@
+{"frames": {
+
+"Water001.png":
+{
+	"frame": {"x":0,"y":0,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+},
+"Water002.png":
+{
+	"frame": {"x":508,"y":0,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+},
+"Water003.png":
+{
+	"frame": {"x":1016,"y":0,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+},
+"Water004.png":
+{
+	"frame": {"x":1524,"y":0,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+},
+"Water005.png":
+{
+	"frame": {"x":0,"y":473,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+},
+"Water006.png":
+{
+	"frame": {"x":508,"y":473,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+},
+"Water007.png":
+{
+	"frame": {"x":1016,"y":473,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+},
+"Water008.png":
+{
+	"frame": {"x":1524,"y":473,"w":508,"h":473},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":508,"h":473},
+	"sourceSize": {"w":508,"h":473}
+}},
+"animations": {
+	"Water": ["Water001.png","Water002.png","Water003.png","Water004.png","Water005.png","Water006.png","Water007.png","Water008.png"]
+},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "hitSfxAtlas.png",
+	"format": "RGBA8888",
+	"size": {"w":2032,"h":946},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:46dde7488e26afd8e66f4f8145925fac:ab931ee500a20771593e8eb9d2ce548e:a6ee3ba5c156e775da78af4ce55f4451$"
+}
+}

@@ -1,0 +1,87 @@
+{"frames": {
+
+"bubble_explo1.png":
+{
+	"frame": {"x":0,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo2.png":
+{
+	"frame": {"x":32,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo3.png":
+{
+	"frame": {"x":64,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo4.png":
+{
+	"frame": {"x":96,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo5.png":
+{
+	"frame": {"x":128,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo6.png":
+{
+	"frame": {"x":160,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo7.png":
+{
+	"frame": {"x":192,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo8.png":
+{
+	"frame": {"x":224,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"bubble_explo9.png":
+{
+	"frame": {"x":256,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+}},
+"animations": {
+	"bubble_explo": ["bubble_explo1.png","bubble_explo2.png","bubble_explo3.png","bubble_explo4.png","bubble_explo5.png","bubble_explo6.png","bubble_explo7.png","bubble_explo8.png","bubble_explo9.png"]
+},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "Explode.png",
+	"format": "RGBA8888",
+	"size": {"w":288,"h":32},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:d6dc6571f9075c535f07f8b866143da7:78e08e456863e5a45d210f6c1d1d1ae4:78be967abad58fc0a48d018c636b5d5a$"
+}
+}
