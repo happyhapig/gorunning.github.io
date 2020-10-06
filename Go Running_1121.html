@@ -1,0 +1,1138 @@
+<!doctype html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="authoring-tool" content="Adobe_Animate_CC">
+  <meta name="viewport" content="width=device-width">
+  <title>Go Running</title>
+  <script src="lib/pixi.min.js" crossorigin="anonymous"></script>
+  <script src="dist/PIXI.TextInput.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+</head>
+      
+<body>
+<script>
+
+let Application = PIXI.Application,
+  Container = PIXI.Container,
+  loader = PIXI.loader,
+  resources = PIXI.loader.resources,
+  TextureCache = PIXI.utils.TextureCache,
+  Sprite = PIXI.Sprite,
+  Texture = PIXI.Texture,
+  Text = PIXI.Text,
+  Graphics = PIXI.Graphics,
+  AnimatedSprite = PIXI.extras.AnimatedSprite;
+  Rectangle = PIXI.Rectangle;
+
+let app = new PIXI.Application({ 
+    width: 1024,
+    height: 512,
+    autoResize: true,
+    antialiasing: true,
+    transparent: false,
+    resolution: 1,
+    backgroundColor : 0xFFC0CB
+});
+
+app.view.style.width = app.screen.width + "px";
+app.view.style.height = app.screen.height + "px";
+document.body.appendChild(app.view);
+
+PIXI.loader.add([
+  "images/Background/background_0_0.png", "images/Background/background_0_1.png", "images/Background/background_0_2.png", "images/Background/background_0_3.png",
+  "images/Background/background_1_0.png", "images/Background/background_1_1.png", "images/Background/background_1_2.png", "images/Background/background_1_3.png",
+  "images/Background/background_2_0.png", "images/Background/background_2_1.png", "images/Background/background_2_2.png", "images/Background/background_2_3.png",
+  "images/Item_Coin_0.png", "images/Item_Fever.png", "images/Rocket.png", "images/tileset.png", "images/Arrow.png",
+  "images/Worm/WormAtlas.json", "images/CoinEffect/hitSfx.json", "images/Explode/Explode.json", "stage/stage_0.json", "stage/stage_1.json", "stage/stage_2.json",
+  "images/FinishLine.png", "images/cube.png", "images/man.png", "images/SuperStar.png",
+  "images/BG03.png", "images/Star.png",
+]).load(Setup)
+
+// ********* Varieties ********* //
+let loginPage, farBackground, inputBox_Name, userName;
+let BgSprite_0 = new Array();
+let BgSprite_1 = new Array();
+let healthBar, progressBar, progressArrow, player, playerCollider, addScoreText, winGameLine, finishLineSprite;
+let loginScene, gameScene, gameOverScene, playerGroup, itemGroup, state;
+let gameOverBg = [], levelFinishText, restartText, goalFlag, tapToStartText;
+let moveSpeedAdjust = 1;
+let bgMoveSpeed = [3.5, 4, 4.5, 5];
+
+let playerAtlasJson, hitSfxAtlasJson, explodeAtlasJson, stageEditJson;
+let playerTexture = [], hitSfxTexture = [], explodeTexture = [], stageTotalCount;
+
+let isStartGame = false, isWinGame = false, isFinalItem = false, isFeverTime = false;
+let manMoveSpeed = 5;
+let playerPosition_array = [277, 367, 457];
+let position_array = [236, 326, 416];
+let poistion_id = 1;
+
+let createTime_min = 4;
+let createTime_max = 7;
+let createInterval = 0;
+let timer = 0;
+var itemKind_array = [[0,0,1],[0,1,0],[1,0,0],[0,0,2],[0,2,0],[2,0,0],[2,1,0],[1,2,0],[0,2,1],[0,1,2],[2,0,1],[1,0,2],[2,1,2],[1,2,1]];
+
+const coinArray = [], feverArray = [], enemyArray = [];
+let coinStatus = [], feverStatus = [], enemyStatus = [], winGameLineStatus = [];
+
+let scoreText, text_score, int_score;
+let scoreCount = 0;
+let score = 0;
+let addScore = 100;
+let feverScore = 200;
+let minusHp = 30;
+let minusTotal = 0;
+let hpMax = 200;
+let stageLenght = 0;
+
+let gameView_w = 1024, gameView_h = 512, scale = 1;
+let stageID = 0;
+let BtnNextStage, BtnLastStage;
+
+let isSwipe = false;
+let startPos, dragingPos;
+let httpRequest;
+
+function resize() {
+  app.renderer.view.style.position = 'absolute';
+  // app.renderer.view.style.left = ((window.innerWidth - app.renderer.width) >> 1) + 'px';
+  // app.renderer.view.style.top = ((window.innerHeight - app.renderer.height) >> 1) + 'px';
+  
+  if (window.innerWidth < gameView_w || window.innerHeight < gameView_h) {
+    scale = Math.min(window.innerWidth / gameView_w, window.innerHeight / gameView_h);
+    app.renderer.view.style.width = gameView_w * scale + 'px';
+    app.renderer.view.style.height = gameView_h * scale + 'px';
+  }  
+
+  app.renderer.view.style.left = (window.innerWidth - (app.renderer.width * scale)) / 2 + 'px';
+  app.renderer.view.style.top = (window.innerHeight - (app.renderer.height * scale)) / 2 + 'px';
+} 
+
+resize();
+window.addEventListener('resize', resize);
+var touchCount = 0;
+
+// PC Controller
+document.addEventListener('mousedown', function(event) {
+  touchCount++;
+  if (isStartGame == false)
+    return;
+  if (touchCount > 1) {
+    isSwipe = true;
+    startPos = event.clientY;
+  }
+});
+
+document.addEventListener('mousemove', function(event) {
+  if (isSwipe == true && isStartGame == true) {
+    dragingPos = event.clientY;
+
+    if (dragingPos - startPos > 100) {
+      isSwipe = false;
+      if (poistion_id < 2){
+        poistion_id++;
+      }
+    } 
+    else if (dragingPos - startPos < -100) {
+      isSwipe = false;
+      if (poistion_id > 0) {
+        poistion_id--;
+      }
+    }
+  } 
+});
+
+// MobileController
+document.addEventListener('touchstart', function(event) {
+  isSwipe = true;
+  startPos = event.touches[0].clientY;
+});
+
+document.addEventListener('touchmove', function(event) {
+  if (isSwipe == true) {
+    dragingPos = event.touches[0].clientY;
+
+    if (dragingPos - startPos > 100) {
+      isSwipe = false;
+      console.log('Down');
+      if (poistion_id < 2){
+        poistion_id++;
+      }
+    } 
+    else if (dragingPos - startPos < -100) {
+      isSwipe = false;
+      console.log('Up');
+      if (poistion_id > 0) {
+        poistion_id--;
+      }
+    }
+  } 
+});
+
+function StageSet(stageId) {
+  for(var i = 0; i < BgSprite_0.length; i++) {
+    BgSprite_0[i].texture = resources["images/Background/background_" + stageId + "_" + i + ".png"].texture;
+    BgSprite_1[i].texture = resources["images/Background/background_" + stageId + "_" + i + ".png"].texture;
+  }
+  stageEditJson = loader.resources["stage/stage_" + stageId + ".json"].data;
+  stageTotalCount = Object.keys(stageEditJson).length;
+  stageLenght = 0;
+  stageCount = 1;  
+  for (var i = 1; i <= stageTotalCount; i++) {
+    stageLenght -= stageEditJson[i].Interval;  // 計算關卡總長度
+  }
+}
+
+function loginSetup() {
+  loginScene = new Container();
+  app.stage.addChild(loginScene);
+
+  loginPage = PIXI.Sprite.from('images/cube.png');
+  loginPage.anchor.set(0.5);
+  loginPage.scale.set(3.5);
+  loginPage.position.set(app.renderer.width / 2, app.renderer.height / 2);
+  loginPage.tint = 0xE5C4B8;
+  loginScene.addChild(loginPage);
+
+  let text_login = new Text('USERNAME');
+  text_login.anchor.set(0.5);
+  text_login.scale.set(1);
+  text_login.position.set(app.renderer.width / 2 - 50, app.renderer.height / 2 - 50);
+  loginScene.addChild(text_login);
+
+  inputBox_Name = new PIXI.TextInput({
+    input: {
+      fontSize: '24px',
+      padding: '12px',
+      width: '200px',
+      color: '#26272E',
+      maxLength: '10'
+    },
+    box: {
+      default: {fill: 0xE8E9F3, rounded: 12, stroke: {color: 0xCBCEE0, width: 3, alpha: 0.5}},
+      focused: {fill: 0xE1E3EE, rounded: 12, stroke: {color: 0xABAFC6, width: 3}},
+      disabled: {fill: 0xDBDBDB, rounded: 12}
+    }
+  })
+  inputBox_Name.placeholder = '...';
+  inputBox_Name.x = 500;
+  inputBox_Name.y = 300;
+  inputBox_Name.pivot.x = inputBox_Name.width / 2;
+  inputBox_Name.pivot.y = inputBox_Name.height / 2;
+  loginScene.addChild(inputBox_Name);
+  inputBox_Name.maxLength = 20;  // text typing maximum, should set at beginning
+
+  let sendBtn = new Sprite(loader.resources['images/Arrow.png'].texture);
+  sendBtn.position.set(inputBox_Name.x + (inputBox_Name.width / 2) + sendBtn.width, inputBox_Name.y + 8);
+  sendBtn.anchor.set(0.5);
+  sendBtn.scale.set(0.75);
+  sendBtn.interactive = true;
+  sendBtn.rotation = Math.PI * 2 * 0.25;
+  loginScene.addChild(sendBtn);
+  sendBtn.on('pointerdown', Login);
+}
+
+function Login() {
+  
+  userName = inputBox_Name.text;
+  app.stage.removeChild(loginScene);
+
+  //********* KeySet ********* // 
+
+  let left = keyboard(37),
+      up = keyboard(38),
+      right = keyboard(39),
+      down = keyboard(40);
+  
+    up.press = () => {
+      if (poistion_id > 0){
+        poistion_id--;
+      }
+    };
+
+    down.press = () => {
+      if (poistion_id < 2){
+        poistion_id++;
+      }
+    };
+}
+
+function Setup() { 
+  
+  stageEditJson = loader.resources["stage/stage_0.json"].data;
+  stageTotalCount = Object.keys(stageEditJson).length;
+  for (var i = 1; i <= stageTotalCount; i++) {
+    stageLenght -= stageEditJson[i].Interval;
+  }
+  
+  gameScene = new Container();
+  app.stage.addChild(gameScene);
+
+  itemGroup = new Container();
+  app.stage.addChild(itemGroup);
+
+  playerGroup = new Container();
+  app.stage.addChild(playerGroup);
+
+  gameOverScene = new Container();
+  app.stage.addChild(gameOverScene);
+
+  // loginSetup();  // Login page (測試方便先隱藏)
+  // 關閉Login畫面，將key設定暫時寫在下方，開啟後須刪除
+  let left = keyboard(37),
+      up = keyboard(38),
+      right = keyboard(39),
+      down = keyboard(40);
+  
+    up.press = () => {
+      if (poistion_id > 0){
+        poistion_id--;
+      }
+    };
+
+    down.press = () => {
+      if (poistion_id < 2){
+        poistion_id++;
+      }
+    };
+
+  farBackground = PIXI.Sprite.from('images/cube.png');
+  farBackground.anchor.set(0.5);
+  farBackground.scale.set(3.5);
+  farBackground.position.set(app.renderer.width / 2, app.renderer.height / 2);
+  farBackground.tint = 0xB3EBFF;
+  gameScene.addChild(farBackground);
+
+  for (var i = 0; i < 4; i++) {
+    BgSprite_0.push(PIXI.Sprite.from('images/Background/background_0_' + i + '.png'));
+    BgSprite_1.push(PIXI.Sprite.from('images/Background/background_0_' + i + '.png'));
+
+    if (i < 3) {
+      BgSprite_0[i].anchor.set(0, 1);
+      BgSprite_0[i].x = 0;
+      BgSprite_0[i].y = app.renderer.height / 2;
+      BgSprite_1[i].anchor.set(0, 1);
+      BgSprite_1[i].x = app.renderer.width;
+      BgSprite_1[i].y = app.renderer.height / 2;
+    } else {
+      BgSprite_0[i].scale.set(0.5);
+      BgSprite_0[i].x = 0;
+      BgSprite_0[i].y = app.renderer.height / 2 - 80;
+      BgSprite_1[i].scale.set(0.5);
+      BgSprite_1[i].x = app.renderer.width;
+      BgSprite_1[i].y = app.renderer.height / 2 - 80;
+    }
+    gameScene.addChild(BgSprite_0[i]);
+    gameScene.addChild(BgSprite_1[i]);
+  }  
+
+  // ********* PlayerCollider ********* //
+  
+  PlayerSet();
+  playerCollider = new Graphics();
+  playerCollider.beginFill(0x000000);
+  playerCollider.drawRect(player.x - 20, player.y - 32, 40, 64);
+  playerCollider.endFill();
+  playerCollider.alpha = 0;
+  playerGroup.addChild(playerCollider);
+
+  // ********* HealthBar ********* //
+
+  healthBar = new Container();
+  healthBar.position.set(50, 50);
+  gameScene.addChild(healthBar);
+
+  let innerBar = new Graphics();
+  innerBar.beginFill(0x000000);
+  innerBar.drawRect(0, 0, hpMax, 16);
+  innerBar.endFill();
+  healthBar.addChild(innerBar);
+
+  let outerBar = new Graphics();
+  outerBar.beginFill(0xFFFFFF);  //0xFF1493
+  outerBar.drawRect(0, 0, hpMax, 16);
+  outerBar.endFill();
+  healthBar.addChild(outerBar);  
+  healthBar.outer = outerBar;
+  healthBar.outer.tint = 0xFF0000;
+
+  // ********* ProgressBar ********* //
+
+  progressBar = new Graphics();
+  progressBar.beginFill('0x3F59B7');
+  progressBar.drawRect(app.renderer.width - 50 - hpMax, 50, hpMax, 16);
+  progressBar.endFill();
+  gameScene.addChild(progressBar);
+
+  progressArrow = new Sprite(loader.resources["images/Arrow.png"].texture);
+  progressArrow.scale.set(0.5);
+  progressArrow.position.set(app.renderer.width - 50 - hpMax, 50 + progressArrow.height / 2 + 16);
+  progressArrow.anchor.set(0.5);
+  
+  gameScene.addChild(progressArrow);
+
+  // ********* StartText ********* //
+
+  tapToStartText = new Text('TAP TO START', textStyle_Restart);
+  tapToStartText.x = app.renderer.width / 2;
+  tapToStartText.y = app.renderer.height / 2 + 150;
+  tapToStartText.alpha = 1;
+  tapToStartText.anchor.set(0.5);
+  gameScene.addChild(tapToStartText);
+  let startTextTween = TweenMax.to(tapToStartText, 1, {alpha: 0, repeat: -1, yoyo: true, ease: Power2.easeIn});
+  tapToStartText.interactive = true;
+  tapToStartText.on('pointerdown', function(){
+    isStartGame = true;
+    startTextTween.pause();
+    tapToStartText.alpha = 0;
+  });
+
+  // ********* Score ********* //
+
+  scoreText = new Text('0', style);
+  scoreText.x = app.renderer.width / 2;
+  scoreText.y = 80;
+  scoreText.anchor.set(0.5);
+  gameScene.addChild(scoreText);
+
+  // ********* GoalFlag ********* //
+  
+  goalFlag = new Graphics();
+  goalFlag.beginFill(0x000000);
+  goalFlag.drawRect(0, app.renderer.height / 2, 16, 16);
+  goalFlag.endFill();
+  goalFlag.alpha = 0;
+  gameScene.addChild(goalFlag);
+
+  // ********* HitCoinSfx ********* //
+
+  hitSfxAtlasJson = loader.resources["images/CoinEffect/hitSfx.json"].textures;
+  let hitTexureAmount = Object.keys(hitSfxAtlasJson).length;
+  for (var i = 1; i <= hitTexureAmount; i++) {
+    let textures = hitSfxAtlasJson["Water00" + i + ".png"];
+    hitSfxTexture.push(textures);     
+  }  
+
+  // ********* ExplodeSfx ********* //
+  
+  explodeAtlasJson = loader.resources["images/Explode/Explode.json"].textures;
+  let ExploTextureAmount = Object.keys(explodeAtlasJson).length;
+
+  for (var i = 1; i <= ExploTextureAmount; i++) {
+    let textures = explodeAtlasJson["bubble_explo" + i + ".png"];
+    explodeTexture.push(textures);     
+  }
+
+  // ********* SwitchStage ********* //
+  
+  BtnLastStage = new Sprite(loader.resources["images/Arrow.png"].texture);
+  BtnLastStage.anchor.set(0.5);
+  BtnLastStage.rotation = Math.PI * 2 * 0.75;
+  BtnLastStage.position.set(app.renderer.width - 200, app.renderer.height - 50);
+  BtnLastStage.interactive = true;
+  BtnLastStage.on('pointerdown', function() {
+    endGamePerform(false);
+  });
+  gameOverScene.addChild(BtnLastStage);
+  BtnNextStage = new Sprite(loader.resources["images/Arrow.png"].texture);
+  BtnNextStage.anchor.set(0.5);
+  BtnNextStage.rotation = Math.PI * 2 * 0.25;
+  BtnNextStage.position.set(app.renderer.width - 100, app.renderer.height - 50);
+  BtnNextStage.interactive = true;
+  BtnNextStage.on('pointerdown', function() {
+    endGamePerform(true);
+  });
+  gameOverScene.addChild(BtnNextStage);
+  
+  state = play;
+
+  app.ticker.add(delta => gameLoop(delta));
+}
+
+function gameLoop(delta) {
+  state(delta);
+}
+
+function play(delta) {
+
+  if (isStartGame == true) {
+    if (poistion_id == 0) {
+      if (player.y > playerPosition_array[0]) {
+        player.y -= 10;
+      }
+    } else if (poistion_id == 1) {
+      if (player.y < playerPosition_array[1]) {
+        player.y += 10;
+      } else if (player.y > playerPosition_array[1]) {
+        player.y -= 10;
+      }
+    } else if (poistion_id == 2) {
+      if (player.y < playerPosition_array[2]) {
+        player.y += 10;
+      }
+    }
+    playerCollider.x = player.x - 20;
+    playerCollider.y = player.y - 32;
+
+    goalFlag.x -= bgMoveSpeed[3] * moveSpeedAdjust;    
+    if (goalFlag.x >= (stageLenght - app.renderer.width - 100)) {
+      progressArrow.x = (app.renderer.width - 50 - hpMax) + (goalFlag.x / (stageLenght - app.renderer.width - 100)) * hpMax;
+    }
+
+    CreateStage(delta);
+    bgMove();
+  }
+}
+
+function end() { }
+
+function PlayerSet() {
+
+  finishLineSprite = new Sprite(resources["images/FinishLine.png"].texture);
+  finishLineSprite.anchor.set(0.5);
+  finishLineSprite.x = app.renderer.width + 300;
+  finishLineSprite.y = position_array[1] + 50;
+  playerGroup.addChild(finishLineSprite);
+
+  playerAtlasJson = loader.resources["images/Worm/WormAtlas.json"].textures;
+  let spriteAmount = Object.keys(playerAtlasJson).length;
+
+  for (var i = 1; i <= spriteAmount; i++){
+    let textures = playerAtlasJson["Store-Worm frame" + i + ".png"];
+    playerTexture.push(textures);     
+  }  
+
+  player = new AnimatedSprite(playerTexture); 
+  player.play();
+  player.animationSpeed = 0.1;
+  playerGroup.addChild(player);
+  player.scale.set(-1, 1);
+  player.anchor.set(0.5);
+  player.x = 200;
+  player.y = playerPosition_array[1];
+  player.vy = 0;
+}
+
+function endGamePerform(isNextStage) {
+
+  if (isNextStage == true) {
+    if (stageID < 2) {
+      stageID++;
+    }    
+  } else {
+    if (stageID > 0) {
+      stageID--;
+    }
+  }  
+  app.stage.removeChild(itemGroup);  
+
+  for (let i = 0; i < 8; i++) {
+    let blackBg = new Graphics();
+    blackBg.beginFill(0x000000);
+    blackBg.drawRect(0, 64 * i, 1024, 64);
+    blackBg.endFill();
+    blackBg.alpha = 0;
+    gameOverBg.push(blackBg);
+    gameOverScene.addChild(gameOverBg[i]);
+    TweenMax.to(gameOverBg[i], 0.8, {alpha: 1});
+  }
+
+  let levelFinishString;
+  let restartString;
+
+  if (isWinGame == false) {
+    levelFinishString = 'GAME OVER';
+    restartString = 'RESTART';
+    levelFinishText = new Text(levelFinishString, textStyle_GameOver);
+  } else {
+    levelFinishString = 'LEVEL COMPLETE';
+    restartString = 'TRY AGAIN';
+    levelFinishText = new Text(levelFinishString, textStyle_GameWin);
+  }
+
+  levelFinishText.x = app.renderer.width / 2;
+  levelFinishText.y = -100;
+  levelFinishText.anchor.set(0.5);
+  gameOverScene.addChild(levelFinishText);
+  
+  text_score = new Text('SCORE', textStyle_TextScore);
+  text_score.position.set(app.renderer.width / 2 - 10, 256);
+  text_score.anchor.set(1, 0.5);
+  text_score.alpha = 0;
+  gameOverScene.addChild(text_score);
+
+  int_score = new Text(score, textStyle_TextScore);
+  int_score.position.set(1024, 256);
+  int_score.anchor.set(0, 0.5);
+  gameOverScene.addChild(int_score);
+
+  restartText = new Text(restartString, textStyle_Restart);
+  restartText.x = app.renderer.width / 2;
+  restartText.y = app.renderer.height / 2 + 150;
+  restartText.anchor.set(0.5);
+  restartText.alpha = 0;
+  gameOverScene.addChild(restartText);
+
+  if (skyFeverTween != null) {
+    skyFeverTween.pause();
+  }  
+  farBackground.tint = 0xB3EBFF;
+
+  TweenLite.to(levelFinishText, 0.8, {ease: Bounce.easeOut, y: 150, delay: 0.6, onComplete: function() {
+    TweenMax.to(text_score, 0.3, {alpha: 1, ease: Back.easeOut});
+    TweenMax.to(int_score, 0.3, {x: app.renderer.width / 2 + 10, ease: Power1.easeIn, delay: 0.3});
+  }});
+  TweenMax.to(restartText, 1.3, {alpha: 1, repeat: -1, yoyo: true, delay: 1.7, ease: Power2.easeOut});
+
+  restartText.interactive = true;
+  restartText.on('pointerdown', Init);
+}
+
+function Init() {
+  
+  StageSet(stageID);
+
+  for (let i = 0; i < gameOverBg.length; i++) {    
+    var moveDir = i % 2 == 0 ? -1024 : 1024;
+    TweenMax.to(gameOverBg[i], 0.5, {x: moveDir, delay: 0.1 * i, onComplete: function(){
+      gameOverScene.removeChild(gameOverBg[i]);
+    }});
+  }
+  gameOverBg.length = 0;
+  finishLineSprite.x = app.renderer.width + 300; 
+  moveSpeedAdjust = 0;
+  progressArrow.position.set(app.renderer.width - 50 - hpMax, 50 + progressArrow.height / 2 + 16);
+  gameOverBg.alpha = 0;
+  levelFinishText.y = -200;
+  text_score.alpha = 0;
+  int_score.position.set(1024, 256);
+  restartText.visible = false;
+  coinArray.length = 0;
+  enemyArray.length = 0;
+  feverArray.length = 0;
+  timer = 0;
+  createInterval = 0;
+  goalFlag.x = 0;
+  player.y = playerPosition_array[1];
+  poistion_id = 1;
+  // scoreCount = 0;
+  // minusTotal = 0;
+  // setScore(0);
+  // healthBar.outer.width = hpMax;
+  
+  gameOverScene.removeChild(levelFinishText);
+  gameOverScene.removeChild(restartText);
+  isWinGame = false;
+  isFinalItem = false;
+  isFeverTime = false;
+  feverCountDown = 0;
+
+  tapToStartText = new Text('TAP TO START', textStyle_Restart);
+  tapToStartText.x = app.renderer.width / 2;
+  tapToStartText.y = app.renderer.height / 2 + 150;
+  tapToStartText.alpha = 1;
+  tapToStartText.anchor.set(0.5);
+  gameScene.addChild(tapToStartText);
+  let startTextTween = TweenMax.to(tapToStartText, 1, {alpha: 0, repeat: -1, yoyo: true, ease: Power2.easeIn});
+  tapToStartText.interactive = true;
+  tapToStartText.on('pointerdown', function(){
+    moveSpeedAdjust = 1;
+    state = play;
+    isStartGame = true;
+    startTextTween.pause();
+    tapToStartText.alpha = 0;
+    itemGroup = new Container();
+    app.stage.addChild(itemGroup);
+    touchCount = 0;
+  });  
+}
+
+function bgMove(){      
+  for (let i = 0; i < BgSprite_0.length; i++) {
+    if (BgSprite_0[i].x <= -BgSprite_0[i].width){
+      BgSprite_0[i].x = BgSprite_0[i].width;
+      BgSprite_1[i].x = 0;
+    }
+    if (BgSprite_1[i].x <= -BgSprite_1[i].width){
+      BgSprite_1[i].x = BgSprite_1[i].width;
+      BgSprite_0[i].x = 0;
+    }
+
+    BgSprite_0[i].x -= bgMoveSpeed[i] * moveSpeedAdjust;
+    BgSprite_1[i].x -= bgMoveSpeed[i] * moveSpeedAdjust;
+  }
+}
+
+let feverCountDown = 0;
+let feverTotalTime = 200;
+var skyFeverTween;
+var scoreObj;
+var tweenScore;
+var stageCount = 1;
+
+function CreateStage(delta) {
+
+  if (stageCount < stageTotalCount) {
+    if (goalFlag.x < createInterval) {
+      createInterval = goalFlag.x - stageEditJson[stageCount].Interval;
+      let singleStage = [];
+      singleStage.push(stageEditJson[stageCount].item_0);
+      singleStage.push(stageEditJson[stageCount].item_1);
+      singleStage.push(stageEditJson[stageCount].item_2);
+      
+      for (var i = 0; i < 3; i++) {        
+        if (singleStage[i] == 1) {
+
+          let isFeverItem = stageEditJson[stageCount].FeverItem;
+
+          if (isFeverItem != null) {
+            let feverSprite = new Sprite(resources["images/Item_Fever.png"].texture);
+            feverSprite.x = app.renderer.width + 40;
+            feverSprite.y = position_array[i];
+            feverSprite.scale.set(0.5);            
+            itemGroup.addChild(feverSprite);
+            feverArray.push(feverSprite);
+            feverStatus[feverArray.length - 1] = { status: 0 };
+          } else {
+            let coinSprite = new Sprite(resources["images/Item_Coin_0.png"].texture);
+            coinSprite.x = app.renderer.width + 50;
+            coinSprite.y = position_array[i] + 20;
+            coinSprite.scale.set(0.5);
+            itemGroup.addChild(coinSprite);
+            coinArray.push(coinSprite);
+            coinStatus[coinArray.length - 1] = { status: 0 };
+          }
+        } 
+        else if (singleStage[i] == 2) {
+          
+          let enemyTexture = TextureCache["images/tileset.png"];
+          let rectangle = new Rectangle(320, 320, 50, 40);
+          enemyTexture.frame = rectangle;
+          let enemySprite = new Sprite(enemyTexture);
+          enemySprite.x = app.renderer.width + 55;
+          enemySprite.y = position_array[i] + 22;
+          itemGroup.addChild(enemySprite);
+          enemyArray.push(enemySprite);
+          enemyStatus[enemyArray.length - 1] = { status: 0, kind: 0 };
+          
+          let isSpecialEnemy = stageEditJson[stageCount].RocketItem;
+
+          if (isSpecialEnemy != null) {
+            let rocketTexture = TextureCache["images/Rocket.png"];
+            let rocketSprite = new Sprite(rocketTexture);
+            rocketSprite.scale.set(0.7);
+            rocketSprite.anchor.set(0.5);
+            rocketSprite.x = app.renderer.width + 75;
+            rocketSprite.y = position_array[i] + 40;
+            itemGroup.addChild(rocketSprite);
+            enemyArray.push(rocketSprite);
+            enemyStatus[enemyArray.length - 1] = { status: 0, kind: 1 };            
+          }
+        }        
+      }
+      stageCount ++;
+    }
+  } else {
+    if (isFinalItem === false) {
+      winGameLine = new Graphics();
+      winGameLine.beginFill(0x000000);
+      winGameLine.drawRect(0, 0, 64, 512);
+      winGameLine.endFill();
+      winGameLine.x = finishLineSprite.x + 300;
+      winGameLine.y = 0;
+      winGameLine.alpha = 0;
+      winGameLine.parentGroup = itemGroup;
+      itemGroup.addChild(winGameLine);
+      winGameLineStatus[0] = {status: 0};
+      isFinalItem = true;
+    }
+  }
+  
+  // ********* Collision Detect ********* //
+
+  if (isWinGame === false) {
+    // finishLine Detection
+    if (isFinalItem === true) {
+      finishLineSprite.x -= bgMoveSpeed[3] * moveSpeedAdjust;
+      winGameLine.x -= bgMoveSpeed[3] * moveSpeedAdjust;
+
+      if (CollisionDetect(playerCollider, winGameLine) && winGameLineStatus[0].status == 0) {
+        winGameLineStatus[0].status = 1;
+        isWinGame = true;
+        endGamePerform(true);
+        state = end;
+        // sendScoreRequest(300);
+        sendScoreRequest(userName, score);
+        getScoreResponse(userName);
+        // console.log('userName = ' + userName);
+        // console.log('score = ' + score);
+      }
+    }
+
+    for (let k = 0; k < coinArray.length; k++) {
+      const coin = coinArray[k];
+      coin.x -= bgMoveSpeed[3] * moveSpeedAdjust;
+          
+      if (CollisionDetect(playerCollider, coin) && coinStatus[k].status == 0) {
+        coinStatus[k].status = 1;
+        itemGroup.removeChild(coin);
+        scoreCount += addScore;
+        setScore(scoreCount);
+        addScorePopup(coin.y);
+        hitCoinEffect(coin.y);
+      }
+    }
+
+    for (let i = 0; i < feverArray.length; i++) {
+      const fever = feverArray[i];
+      fever.x -= bgMoveSpeed[3] * moveSpeedAdjust;
+          
+      if (CollisionDetect(playerCollider, fever) && feverStatus[i].status == 0) {
+        feverStatus[i].status = 1;
+        itemGroup.removeChild(fever);
+        scoreCount += feverScore;
+        setScore(scoreCount);
+        addScorePopup(fever.y);
+        isFeverTime = true;
+        moveSpeedAdjust = 2;
+        skyFeverTween = TweenMax.fromTo(farBackground, 0.25, {tint: 0xFFFFFF}, {tint: 0xFF0000, repeat: -1, yoyo: true, ease: Power2.easeIn, paused:true});
+        skyFeverTween.play();
+      }
+    }
+
+    if (isFeverTime) {
+      if (feverCountDown <= feverTotalTime) {
+        feverCountDown += delta;
+      } else {
+        isFeverTime = false;
+        feverCountDown = 0;
+        moveSpeedAdjust = 1;
+        skyFeverTween.pause();
+        farBackground.tint = 0xB3EBFF;
+      }
+    }
+
+    for(let j = 0; j < enemyArray.length; j++) {
+      const enemy = enemyArray[j];
+
+      if (enemyStatus[j].kind == 0) {
+        enemy.x -= bgMoveSpeed[3] * moveSpeedAdjust;
+      } else {
+        enemy.x -= bgMoveSpeed[3] * 2 * moveSpeedAdjust;
+      }
+
+      if (!isFeverTime) {
+        if (CollisionDetect(playerCollider, enemy)) {
+          TweenMax.to(player, 0.05, {alpha: 0.3, repeat: 2, onComplete: function() {
+            player.alpha = 1;
+          }});          
+
+          if (enemyStatus[j].status == 0) {
+            enemyStatus[j].status = 1;
+            ExplodeEffect(enemy);
+            minusTotal += minusHp;
+            scoreObj = { value: healthBar.outer.width };
+
+            if (minusTotal < hpMax) {
+              
+              TweenMax.to(healthBar.outer, 0.1, {tint: 0xFFFFFF, repeat:2, onComplete: function() {
+                healthBar.outer.tint = 0xFF0000;           
+              }});              
+              
+              tweenScore = new TweenMax(scoreObj, 0.1, { value: healthBar.outer.width -= minusHp });                     
+              
+            } else {
+              tweenScore = new TweenMax(scoreObj, 0.1, { value: healthBar.outer.width = 0 });
+              state = end;
+              endGamePerform(false);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function hitCoinEffect(hitPosY) {  
+  
+  let sfxAnim = new AnimatedSprite(hitSfxTexture); //new Sprite(loader.resources["images/man.png"].texture);
+  sfxAnim.play();
+  sfxAnim.tint = 0xFFFF00;
+  sfxAnim.alpha = 0.8;
+  sfxAnim.animationSpeed = 0.5;
+  sfxAnim.loop = false;  
+  playerGroup.addChild(sfxAnim);
+  sfxAnim.scale.set(0.3);
+  sfxAnim.anchor.set(0.5);  
+  sfxAnim.x = 200 + 20;
+  sfxAnim.y = hitPosY + 25;
+  sfxAnim.vy = 0;
+
+  sfxAnim.onComplete = () => {
+    playerGroup.removeChild(sfxAnim);
+  };
+}
+
+// ********* hitEffect ********* //
+
+function ExplodeEffect(hitPos) {  
+  
+  let explodeAnim = new AnimatedSprite(explodeTexture); //new Sprite(loader.resources["images/man.png"].texture);
+  explodeAnim.play();
+  explodeAnim.tint = 0xFFFF00;
+  explodeAnim.alpha = 1;
+  explodeAnim.animationSpeed = 0.25;
+  explodeAnim.loop = false;
+  playerGroup.addChild(explodeAnim);
+  explodeAnim.scale.set(2.5);
+  explodeAnim.anchor.set(0.5);
+  explodeAnim.x = hitPos.x;
+  explodeAnim.y = hitPos.y + 10;
+  explodeAnim.vy = 0;
+
+  explodeAnim.onComplete = () => {
+    playerGroup.removeChild(explodeAnim);
+  };
+}
+
+// ********* RandomMachine ********* //
+
+function getRandomTime(max, min) {
+  return Math.floor(Math.random() * max) + min;
+}
+
+// ********* Score ********* //
+
+function addScorePopup(posY) {
+  addScoreText = new Text(addScore, textStyle_AddScore);
+  addScoreText.x = player.x + 20;
+  addScoreText.y = posY;
+  addScoreText.anchor.set(0.5);
+  gameScene.addChild(addScoreText);
+
+  TweenMax.to(addScoreText, 0.8, { alpha: 0, ease: Power2.easeOut });
+  TweenMax.to(addScoreText, 0.8, { y: posY - 50, ease: Power2.easeOut, onComplete: function(){
+    gameScene.removeChild(addScoreText);
+  }});
+}
+
+const style = new PIXI.TextStyle({
+  fontFamily: 'Arial',
+  fontSize: 48,
+  // fontStyle: 'italic',
+  fontWeight: 'bold',
+  fill: ['#ffffff', '#CFBDDF'], // gradient
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  dropShadow: true,
+  dropShadowColor: '#000000',
+  dropShadowBlur: 4,
+  dropShadowAngle: Math.PI / 6,
+  dropShadowDistance: 6,
+  wordWrap: true,
+  wordWrapWidth: 440,
+});
+
+const textStyle_AddScore = new PIXI.TextStyle({
+  fontFamily: 'Arial',
+  fontSize: 24,
+  fontWeight: 'bold',
+  fill: ['#ffffff'],
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  wordWrap: true,
+  wordWrapWidth: 440,
+});
+
+const textStyle_GameOver = new PIXI.TextStyle({
+  fontFamily: 'verdana',
+  fontSize: 64,
+  fontWeight: 'bold',
+  fill: ['#ffffff', '#CACACA'], // gradient
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  wordWrap: false,
+  wordWrapWidth: 440,
+});
+
+const textStyle_GameWin = new PIXI.TextStyle({
+  fontFamily: 'verdana',
+  fontSize: 64,
+  fontWeight: 'bold',
+  fill: ['#FFFF00', '#EFB701'], // gradient
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  wordWrap: false,
+  wordWrapWidth: 440,
+});
+
+const textStyle_Restart = new PIXI.TextStyle({
+  fontFamily: 'verdana',
+  fontSize: 32,
+  // fontStyle: 'italic',
+  fontWeight: 'bold',
+  fill: ['#ffffff', '#CACACA'], // gradient
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  wordWrap: false,
+  wordWrapWidth: 440,
+});
+
+const textStyle_TextUsername = new PIXI.TextStyle({
+  fontFamily: 'verdana',
+  fontSize: 24,
+  fontWeight: 'bold',
+  fill: ['#666666'], // gradient
+  // stroke: '#4a1850',
+  // strokeThickness: 2,
+  wordWrap: false,
+  wordWrapWidth: 440,
+});
+
+const textStyle_TextScore = new PIXI.TextStyle({
+  fontFamily: 'verdana',
+  fontSize: 48,
+  fontWeight: 'bold',
+  fontStyle: 'italic',
+  fill: ['#FFFF00', '#93C54B'], // gradient
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  wordWrap: false,
+  wordWrapWidth: 440,
+});
+
+const setScore = value => {
+  score = value;
+  scoreText.setText(score);
+};
+
+// ********* Keyboard ********* //
+
+//The `keyboard` helper function
+function keyboard(keyCode) {
+  var key = {};
+  key.code = keyCode;
+  key.isDown = false;
+  key.isUp = true;
+  key.press = undefined;
+  key.release = undefined;
+  //The `downHandler`
+  key.downHandler = event => {
+    if (event.keyCode === key.code) {
+      if (key.isUp && key.press) key.press();
+      key.isDown = true;
+      key.isUp = false;
+    }
+    event.preventDefault();
+  };
+
+  //The `upHandler`
+  key.upHandler = event => {
+    if (event.keyCode === key.code) {
+      if (key.isDown && key.release) key.release();
+      key.isDown = false;
+      key.isUp = true;
+    }
+    event.preventDefault();
+  };
+
+  //Attach event listeners
+  window.addEventListener(
+    "keydown", key.downHandler.bind(key), false
+  );
+  window.addEventListener(
+    "keyup", key.upHandler.bind(key), false
+  );
+  return key;
+}
+
+function CollisionDetect(r1, r2) {
+
+//Define the variables we'll need to calculate
+let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
+
+//hit will determine whether there's a collision
+hit = false;
+
+//Find the center points of each sprite
+r1.centerX = r1.x + r1.width / 2;
+r1.centerY = r1.y + r1.height / 2;
+r2.centerX = r2.x + r2.width / 2;
+r2.centerY = r2.y + r2.height / 2;
+
+//Find the half-widths and half-heights of each sprite
+r1.halfWidth = r1.width / 2;
+r1.halfHeight = r1.height / 2;
+r2.halfWidth = r2.width / 2;
+r2.halfHeight = r2.height / 2;
+
+//Calculate the distance vector between the textures
+vx = r1.centerX - r2.centerX;
+vy = r1.centerY - r2.centerY;
+
+//Figure out the combined half-widths and half-heights
+combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+
+//Check for a collision on the x axis
+if (Math.abs(vx) < combinedHalfWidths) {
+
+  //A collision might be occurring. Check for a collision on the y axis
+  if (Math.abs(vy) < combinedHalfHeights) {
+
+    //There's definitely a collision happening
+    hit = true;
+  } else {
+
+    //There's no collision on the y axis
+    hit = false;
+  }
+} else {
+
+  //There's no collision on the x axis
+  hit = false;
+}
+
+//`hit` will be either `true` or `false`
+return hit;
+};
+
+function sendScoreRequest(userId, finalScore) {
+  httpRequest = new XMLHttpRequest();
+
+  if (!httpRequest) {
+    alert('Giving up :( Cannot create an XMLHTTP instance');
+    return false;
+  }
+  var sendData = 'userId=' + userId + '&' + 'score=' + finalScore;
+  // console.log(sendData);
+  httpRequest.open('POST', 'https://api2.incognitohub.com/score');
+  httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  httpRequest.send(sendData);
+}
+
+let httpResponse;
+
+function getScoreResponse(userId) {
+  httpResponse = new XMLHttpRequest();
+  httpResponse.open('GET', 'https://api2.incognitohub.com/score/' + userId);
+  httpResponse.send();
+
+  httpResponse.onreadystatechange = function() {
+
+    if (httpResponse.readyState === XMLHttpRequest.DONE) {
+      if (httpResponse.status === 200) {
+        var responseData = JSON.parse(httpResponse.responseText);
+        // console.log('Name : ' + responseData.userId + ', Score : ' + responseData.score);
+      } else {
+        alert('Data is Empty');
+      }      
+    }
+  }
+}
+
+</script>
+</body>
